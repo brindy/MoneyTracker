@@ -28,9 +28,9 @@ public class ExpenseEdit extends Activity {
 		mRowId = null;
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			double value = extras.getDouble(ExpensesDbAdapter.KEY_VALUE);
-			String desc = extras.getString(ExpensesDbAdapter.KEY_DESC);
-			mRowId = extras.getLong(ExpensesDbAdapter.KEY_ROWID);
+			double value = extras.getDouble(Expense.KEY_VALUE);
+			String desc = extras.getString(Expense.KEY_DESC);
+			mRowId = extras.getLong(Expense.KEY_ROWID);
 
 			mValueText.setText(Double.toString(value));
 
@@ -44,12 +44,12 @@ public class ExpenseEdit extends Activity {
 			public void onClick(View view) {
 				Bundle bundle = new Bundle();
 
-				bundle.putString(ExpensesDbAdapter.KEY_DESC, mDescText
-						.getText().toString());
-				bundle.putDouble(ExpensesDbAdapter.KEY_VALUE, Double
+				bundle.putString(Expense.KEY_DESC, mDescText.getText()
+						.toString());
+				bundle.putDouble(Expense.KEY_VALUE, Double
 						.parseDouble(mValueText.getText().toString()));
 				if (mRowId != null) {
-					bundle.putLong(ExpensesDbAdapter.KEY_ROWID, mRowId);
+					bundle.putLong(Expense.KEY_ROWID, mRowId);
 				}
 
 				Intent mIntent = new Intent();

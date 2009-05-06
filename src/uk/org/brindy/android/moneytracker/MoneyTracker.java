@@ -1,12 +1,12 @@
 package uk.org.brindy.android.moneytracker;
 
-import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.List;
 
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -14,9 +14,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 public class MoneyTracker extends ListActivity {
@@ -33,11 +34,9 @@ public class MoneyTracker extends ListActivity {
 
 	private TextView mRemaining;
 
-	private ExpensesDbAdapter mDbAdapter;
+	private ExpensesDbHelper mDbHelper;
 
 	private MenuItem mDeleteItem;
-
-	private Cursor mCursor;
 
 	private NumberFormat mDecimalFormat = DecimalFormat.getCurrencyInstance();
 
@@ -47,19 +46,22 @@ public class MoneyTracker extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		mDbAdapter = new ExpensesDbAdapter(this);
-		mDbAdapter.open();
+		mDbHelper = new ExpensesDbHelper(this);
 
 		mRemaining = (TextView) findViewById(R.id.remaining);
 
 		mDisposable = (EditText) findViewById(R.id.disposable);
-		mDisposable.setText(mDbAdapter.getValue("disposable"));
+		mDisposable.setText(Double.toString(mDbHelper.getDisposable()));
 		mDisposable.addTextChangedListener(new TextWatcher() {
 
 			public void afterTextChanged(Editable s) {
-				fillData();
-				mDbAdapter.setValue("disposable", mDisposable.getText()
-						.toString());
+				double disposable = 0.0;
+				if (mDisposable.getText().toString().trim().length() > 0) {
+					disposable = Double.parseDouble(mDisposable.getText()
+							.toString());
+				}
+				mDbHelper.setDisposable(disposable);
+				calculateRemaining();
 			}
 
 			public void beforeTextChanged(CharSequence s, int start, int count,
@@ -73,7 +75,7 @@ public class MoneyTracker extends ListActivity {
 
 		fillData();
 	}
-
+	
 	@Override
 	public boolean onMenuOpened(int featureId, Menu menu) {
 		mDeleteItem.setEnabled(-1 != getSelectedItemPosition());
@@ -121,7 +123,6 @@ public class MoneyTracker extends ListActivity {
 
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
-		super.onListItemClick(l, v, position, id);
 		onEditExpense();
 	}
 
@@ -133,21 +134,23 @@ public class MoneyTracker extends ListActivity {
 		}
 
 		Bundle extras = data.getExtras();
+		Expense exp;
 
 		switch (requestCode) {
 		case ACTIVITY_ADD_EXPENSE:
-			double value = extras.getDouble(ExpensesDbAdapter.KEY_VALUE);
-			String desc = extras.getString(ExpensesDbAdapter.KEY_DESC);
-			mDbAdapter.createExpense(value, desc);
+			exp = new Expense();
+			exp.setValue(extras.getDouble(Expense.KEY_VALUE));
+			exp.setDescription(extras.getString(Expense.KEY_DESC));
+			mDbHelper.createExpense(exp);
 			break;
 
 		case ACTIVITY_EDIT_EXPENSE:
-			Long rowID = extras.getLong(ExpensesDbAdapter.KEY_ROWID);
+			Long rowID = extras.getLong(Expense.KEY_ROWID);
 			if (rowID != null) {
-				double editValue = extras
-						.getDouble(ExpensesDbAdapter.KEY_VALUE);
-				String editDesc = extras.getString(ExpensesDbAdapter.KEY_DESC);
-				mDbAdapter.updateExpense(rowID, editValue, editDesc);
+				exp = mDbHelper.findExpenseById(rowID);
+				exp.setValue(extras.getDouble(Expense.KEY_VALUE));
+				exp.setDescription(extras.getString(Expense.KEY_DESC));
+				mDbHelper.updateExpense(exp);
 			}
 			break;
 		}
@@ -155,67 +158,56 @@ public class MoneyTracker extends ListActivity {
 	}
 
 	private void calculateRemaining() {
-		BigDecimal dec = new BigDecimal(0);
+		double remaining = 0.0;
 		if (mDisposable.getText().toString().trim().length() > 0) {
-			dec = new BigDecimal(mDisposable.getText().toString());
+			remaining = Double.parseDouble(mDisposable.getText().toString());
 		}
 
-		Cursor c = mDbAdapter.fetchAllExpenses();
-		if (c.moveToFirst()) {
-
-			while (!c.isAfterLast()) {
-
-				BigDecimal exp = new BigDecimal(c.getDouble(c
-						.getColumnIndex(ExpensesDbAdapter.KEY_VALUE)));
-				dec = dec.subtract(exp);
-
-				if (!c.moveToNext()) {
-					Log.w("MoneyTracker#calculateRemaining()",
-							"Failed to move to next in cursor");
-					break;
-				}
-			}
-
+		List<Expense> expenses = mDbHelper.fetchAllExpenses();
+		for (Expense expense : expenses) {
+			remaining -= expense.getValue();
 		}
-		c.close();
 
 		NumberFormat fmt = mDecimalFormat;
-		mRemaining.setText(fmt.format(dec) + " remaining");
+		mRemaining.setText(fmt.format(remaining) + " remaining");
 	}
 
 	private void fillData() {
 		calculateRemaining();
 
-		// Get all of the rows from the database and create the item list
-		mCursor = mDbAdapter.fetchAllExpenses();
-		startManagingCursor(mCursor);
+		final Context context = this;
+		final List<Expense> expenses = mDbHelper.fetchAllExpenses();
+		setListAdapter(new BaseAdapter() {
 
-		// Create an array to specify the fields we want to display in the list
-		// (only TITLE)
-		String[] from = new String[] { ExpensesDbAdapter.KEY_VALUE,
-				ExpensesDbAdapter.KEY_DESC };
-
-		// and an array of the fields we want to bind those fields to (in this
-		// case just text1)
-		int[] to = new int[] { R.id.value, R.id.description };
-
-		// Now create a simple cursor adapter and set it to display
-		SimpleCursorAdapter cursorAdapter = new SimpleCursorAdapter(this,
-				R.layout.expenses_row, mCursor, from, to) {
-
-			@Override
-			public void setViewText(TextView v, String text) {
-				if (v.getId() == R.id.value) {
-					NumberFormat fmt = mDecimalFormat;
-					v.setText(fmt.format(Double.parseDouble(text)));
-				} else {
-					super.setViewText(v, text);
-				}
-
+			public int getCount() {
+				return expenses.size();
 			}
 
-		};
-		setListAdapter(cursorAdapter);
+			public Object getItem(int position) {
+				return expenses.get(position);
+			}
+
+			public long getItemId(int position) {
+				Expense expense = expenses.get(position);
+				return expense.getId();
+			}
+
+			public View getView(int position, View convertView, ViewGroup parent) {
+				Log.d(getClass().getName(), "getView()");
+
+				Expense exp = expenses.get(position);
+				View view = View.inflate(context, R.layout.expenses_row, null);
+
+				TextView value = (TextView) view.findViewById(R.id.value);
+				value.setText(mDecimalFormat.format(exp.getValue()));
+
+				TextView desc = (TextView) view.findViewById(R.id.description);
+				desc.setText(exp.getDescription());
+
+				return view;
+			}
+
+		});
 	}
 
 	private void onAddExpense() {
@@ -227,15 +219,11 @@ public class MoneyTracker extends ListActivity {
 		Intent i = new Intent(this, ExpenseEdit.class);
 
 		if (-1 != getSelectedItemPosition()) {
-			mCursor.moveToPosition(getSelectedItemPosition());
+			Expense expense = mDbHelper.findExpenseById(getSelectedItemId());
 
-			i.putExtra(ExpensesDbAdapter.KEY_ROWID, getSelectedItemId());
-
-			i.putExtra(ExpensesDbAdapter.KEY_VALUE, mCursor.getDouble(mCursor
-					.getColumnIndex(ExpensesDbAdapter.KEY_VALUE)));
-
-			i.putExtra(ExpensesDbAdapter.KEY_DESC, mCursor.getString(mCursor
-					.getColumnIndex(ExpensesDbAdapter.KEY_DESC)));
+			i.putExtra(Expense.KEY_ROWID, expense.getId());
+			i.putExtra(Expense.KEY_VALUE, expense.getValue());
+			i.putExtra(Expense.KEY_DESC, expense.getDescription());
 
 			startActivityForResult(i, ACTIVITY_EDIT_EXPENSE);
 		}
@@ -243,13 +231,13 @@ public class MoneyTracker extends ListActivity {
 
 	private void onDeleteExpense() {
 		if (-1 != getSelectedItemPosition()) {
-			mDbAdapter.deleteExpense(getSelectedItemId());
+			mDbHelper.deleteExpense(getSelectedItemId());
 			fillData();
 		}
 	}
 
 	private void onClearExpenses() {
-		mDbAdapter.deleteAllExpenses();
+		mDbHelper.deleteAllExpenses();
 		fillData();
 	}
 }
