@@ -56,9 +56,8 @@ public class MoneyTracker extends ListActivity {
 
 			public void afterTextChanged(Editable s) {
 				double disposable = 0.0;
-				if (mDisposable.getText().toString().trim().length() > 0) {
-					disposable = Double.parseDouble(mDisposable.getText()
-							.toString());
+				if (s.toString().trim().length() > 0) {
+					disposable = Double.parseDouble(s.toString());
 				}
 				mDbHelper.setDisposable(disposable);
 				calculateRemaining();
@@ -75,7 +74,7 @@ public class MoneyTracker extends ListActivity {
 
 		fillData();
 	}
-	
+
 	@Override
 	public boolean onMenuOpened(int featureId, Menu menu) {
 		mDeleteItem.setEnabled(-1 != getSelectedItemPosition());

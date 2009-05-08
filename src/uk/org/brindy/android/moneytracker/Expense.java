@@ -1,6 +1,10 @@
 package uk.org.brindy.android.moneytracker;
 
-public class Expense {
+import java.io.Serializable;
+
+public class Expense implements Serializable {
+
+	private static final long serialVersionUID = Double.doubleToLongBits(1.4);
 
 	public static String KEY_DESC = "desc";
 	public static String KEY_VALUE = "value";
