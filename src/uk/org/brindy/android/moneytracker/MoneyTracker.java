@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,8 +21,8 @@ import android.widget.TextView;
 
 public class MoneyTracker extends ListActivity {
 
-	private static final int ACTIVITY_ADD_EXPENSE = 0;
-	private static final int ACTIVITY_EDIT_EXPENSE = 1;
+	private static final int ACTIVITY_ADD_EXPENSE = 1;
+	private static final int ACTIVITY_EDIT_EXPENSE = 2;
 
 	private static final int ADD_EXPENSE_MENU_ID = Menu.FIRST;
 	private static final int EDIT_EXPENSE_MENU_ID = Menu.FIRST + 1;
@@ -159,14 +158,8 @@ public class MoneyTracker extends ListActivity {
 	private void calculateRemaining() {
 		double remaining = 0.0;
 		if (mDisposable.getText().toString().trim().length() > 0) {
-			remaining = Double.parseDouble(mDisposable.getText().toString());
+			remaining = this.mDbHelper.remaining();
 		}
-
-		List<Expense> expenses = mDbHelper.fetchAllExpenses();
-		for (Expense expense : expenses) {
-			remaining -= expense.getValue();
-		}
-
 		NumberFormat fmt = mDecimalFormat;
 		mRemaining.setText(fmt.format(remaining) + " remaining");
 	}
@@ -192,8 +185,6 @@ public class MoneyTracker extends ListActivity {
 			}
 
 			public View getView(int position, View convertView, ViewGroup parent) {
-				Log.d(getClass().getName(), "getView()");
-
 				Expense exp = expenses.get(position);
 				View view = View.inflate(context, R.layout.expenses_row, null);
 

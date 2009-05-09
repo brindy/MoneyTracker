@@ -46,4 +46,12 @@ public class ExpensesMgr implements Serializable {
 		nextID.set(1);
 	}
 
+	double remaining(double disposable) {
+		double remaining = disposable;
+		for (Expense expense : expenses) {
+			remaining -= expense.getValue();
+		}
+		return remaining;
+	}
+
 }

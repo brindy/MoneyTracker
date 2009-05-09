@@ -9,4 +9,5 @@
 <string name="menu_clear_expenses">Clear All</string>
 <string name="label_expense_edit">Edit Expense</string>
 <string name="menu_edit_expense">Edit Expense</string>
+<string name="widget_label">Money Tracker</string>
 </resources>

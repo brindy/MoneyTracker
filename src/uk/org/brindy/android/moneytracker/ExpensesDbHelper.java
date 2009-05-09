@@ -11,11 +11,14 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.util.List;
 
+import android.appwidget.AppWidgetManager;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 
 public class ExpensesDbHelper {
 
+	// compatible with 1.5, so leave as 1.4 for now
 	private static final String APP_VERSION = "1.4";
 
 	private ExpensesMgr expenses;
@@ -26,7 +29,7 @@ public class ExpensesDbHelper {
 
 	public ExpensesDbHelper(Context ctx) {
 		this.mCtx = ctx;
-		
+
 		if (!APP_VERSION.equals(findVersion())) {
 			createFileName(ExpensesMgr.class.getName(), ctx).delete();
 			createFileName(Disposable.class.getName(), ctx).delete();
@@ -135,6 +138,16 @@ public class ExpensesDbHelper {
 				}
 			}
 		}
+
+		// broadcast to the widget
+		// mCtx.sendBroadcast(new
+		// Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE,
+		// null, ctx, MoneyTrackerWidgetProvider.class));
+
+		Intent i = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+		i.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS,
+				new int[] { R.xml.widget_info });
+		mCtx.sendBroadcast(i);
 	}
 
 	public long createExpense(Expense expense) {
@@ -181,4 +194,9 @@ public class ExpensesDbHelper {
 	public double getDisposable() {
 		return disp.getValue();
 	}
+
+	public double remaining() {
+		return expenses.remaining(getDisposable());
+	}
+
 }
