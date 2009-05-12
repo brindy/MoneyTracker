@@ -1,23 +1,30 @@
 package uk.org.brindy.android.moneytracker;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MoneyTracker extends ListActivity {
 
@@ -28,6 +35,9 @@ public class MoneyTracker extends ListActivity {
 	private static final int EDIT_EXPENSE_MENU_ID = Menu.FIRST + 1;
 	private static final int DELETE_EXPENSE_MENU_ID = Menu.FIRST + 2;
 	private static final int CLEAR_EXPENSES_MENU_ID = Menu.FIRST + 3;
+	private static final int BACKUP_MENU_ID = Menu.FIRST + 4;
+	private static final int BACKUP_SUBMENU_NOW_ID = Menu.FIRST + 5;
+	private static final int BACKUP_SUBMENU_RESTORE_ID = Menu.FIRST + 6;
 
 	private EditText mDisposable;
 
@@ -90,6 +100,21 @@ public class MoneyTracker extends ListActivity {
 		mDeleteItem.setEnabled(false);
 
 		menu.add(0, CLEAR_EXPENSES_MENU_ID, 0, R.string.menu_clear_expenses);
+
+		SubMenu sub = menu.addSubMenu(0, BACKUP_MENU_ID, 0,
+				R.string.menu_backup);
+
+		if (Environment.MEDIA_MOUNTED.equals(Environment
+				.getExternalStorageState())) {
+
+			sub.add(BACKUP_MENU_ID, BACKUP_SUBMENU_NOW_ID, 0,
+					R.string.menu_backup_now);
+
+			sub.add(BACKUP_MENU_ID, BACKUP_SUBMENU_RESTORE_ID, 0,
+					R.string.menu_backup_restore);
+
+		}
+
 		return true;
 	}
 
@@ -112,6 +137,17 @@ public class MoneyTracker extends ListActivity {
 
 		case CLEAR_EXPENSES_MENU_ID:
 			onClearExpenses();
+			return true;
+
+		case BACKUP_MENU_ID:
+			return !isMediaReady();
+
+		case BACKUP_SUBMENU_NOW_ID:
+			onBackupNow();
+			return true;
+
+		case BACKUP_SUBMENU_RESTORE_ID:
+			onBackupRestore();
 			return true;
 		}
 
@@ -229,5 +265,102 @@ public class MoneyTracker extends ListActivity {
 	private void onClearExpenses() {
 		mDbHelper.deleteAllExpenses();
 		fillData();
+	}
+
+	private void onBackupNow() {
+		if (isMediaReady()) {
+			final File backup = getBackupFile();
+			if (backup.exists()) {
+				final Context ctx = this;
+				AlertDialog.Builder builder = new AlertDialog.Builder(this);
+				builder.setTitle("Overwrite existing backup?");
+				builder.setItems(new String[] { "Yes", "No" },
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int which) {
+								if (which == 0) {
+									backup(backup);
+								} else {
+									Toast.makeText(ctx, "Backup cancelled",
+											Toast.LENGTH_LONG).show();
+								}
+							}
+						});
+				builder.show();
+			} else {
+				backup(backup);
+			}
+		}
+	}
+
+	private void restore(final File backup, final Context ctx) {
+		try {
+			mDbHelper.restore(backup);
+			mDisposable.setText(String.valueOf(mDbHelper.getDisposable()));
+			fillData();
+			Toast.makeText(ctx, R.string.backup_restored, Toast.LENGTH_LONG)
+					.show();
+		} catch (Exception ex) {
+			Toast.makeText(ctx, ex.getMessage(), Toast.LENGTH_LONG);
+		}
+	}
+
+	private void backup(File backup) {
+		try {
+			mDbHelper.backup(backup);
+			Toast.makeText(this, R.string.backup_complete, Toast.LENGTH_LONG)
+					.show();
+		} catch (IOException e) {
+			Toast.makeText(
+					this,
+					"Unexpected error while backing up (" + e.getMessage()
+							+ ")", Toast.LENGTH_LONG).show();
+		}
+	}
+
+	private File getBackupFile() {
+		File dir = Environment.getExternalStorageDirectory();
+		File backup = new File(dir, "MoneyTracker.backup");
+		return backup;
+	}
+
+	private void onBackupRestore() {
+		if (isMediaReady()) {
+			final File backup = getBackupFile();
+			if (!backup.exists()) {
+				Toast.makeText(this, R.string.backup_does_not_exist,
+						Toast.LENGTH_LONG).show();
+			} else {
+				final Context ctx = this;
+				AlertDialog.Builder builder = new AlertDialog.Builder(this);
+				builder.setTitle("Really restore from backup?");
+				builder.setItems(new String[] { "Yes", "No" },
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int which) {
+								if (which == 0) {
+									restore(backup, ctx);
+								} else {
+									Toast.makeText(ctx, "Restore cancelled",
+											Toast.LENGTH_LONG).show();
+								}
+							}
+
+						});
+				builder.show();
+			}
+		}
+	}
+
+	private boolean isMediaReady() {
+
+		if (Environment.MEDIA_MOUNTED.equals(Environment
+				.getExternalStorageState())) {
+			return true;
+		}
+
+		Toast.makeText(this, R.string.no_external_media, Toast.LENGTH_LONG)
+				.show();
+		return false;
 	}
 }

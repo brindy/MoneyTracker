@@ -18,7 +18,7 @@ import android.util.Log;
 
 public class ExpensesDbHelper {
 
-	// compatible with 1.5, so leave as 1.4 for now
+	// compatible with 1.6, so leave as 1.4 for now
 	private static final String APP_VERSION = "1.4";
 
 	private ExpensesMgr expenses;
@@ -197,6 +197,57 @@ public class ExpensesDbHelper {
 
 	public double remaining() {
 		return expenses.remaining(getDisposable());
+	}
+
+	public void backup(File toFile) throws IOException {
+
+		ObjectOutputStream out = null;
+		try {
+			out = new ObjectOutputStream(new FileOutputStream(toFile));
+			out.writeObject(APP_VERSION);
+			out.writeObject(expenses);
+			out.writeObject(disp);
+		} finally {
+			if (null != out) {
+				try {
+					out.close();
+				} catch (IOException e) {
+					Log.e(getClass().getName() + "#backup", e.getMessage());
+				}
+			}
+		}
+
+	}
+
+	public void restore(File fromFile) throws Exception {
+
+		ObjectInputStream in = new ObjectInputStream(new FileInputStream(
+				fromFile));
+
+		try {
+			String ver = (String) in.readObject();
+			if (APP_VERSION.equals("ver")) {
+				throw new Exception("Incompatible backup version " + ver);
+			}
+			expenses = (ExpensesMgr) in.readObject();
+			disp = (Disposable) in.readObject();
+
+			saveObject(expenses);
+			saveObject(disp);
+
+		} catch (IOException ex) {
+			throw new Exception(
+					"Failed to read backup file, it could be corrupt");
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (Exception e) {
+					Log.e(getClass().getName() + "#restore", e.getMessage());
+				}
+			}
+		}
+
 	}
 
 }

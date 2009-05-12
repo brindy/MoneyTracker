@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">MoneyTracker</string>
-<string name="menu_add_expense">Add Expense</string>
-<string name="confirm">Add</string>
-<string name="description">Description</string>
-<string name="expensevalue">Value</string>
-<string name="menu_delete_expense">Delete Expense</string>
-<string name="menu_clear_expenses">Clear All</string>
-<string name="label_expense_edit">Edit Expense</string>
-<string name="menu_edit_expense">Edit Expense</string>
-<string name="widget_label">Money Tracker</string>
+	<string name="app_name">MoneyTracker</string>
+	<string name="menu_add_expense">Add Expense</string>
+	<string name="confirm">Add</string>
+	<string name="description">Description</string>
+	<string name="expensevalue">Value</string>
+	<string name="menu_delete_expense">Delete Expense</string>
+	<string name="menu_backup">Backup / Restore</string>
+	<string name="menu_clear_expenses">Clear All</string>
+	<string name="label_expense_edit">Edit Expense</string>
+	<string name="menu_edit_expense">Edit Expense</string>
+	<string name="widget_label">Money Tracker</string>
+	<string name="menu_backup_now">Backup</string>
+	<string name="menu_backup_restore">Restore</string>
+	<string name="no_external_media">Your SD Card is not present, or is not ready
+		for use.</string>
+	<string name="backup_complete">Backup successful.</string>
+	<string name="backup_does_not_exist">Backup file not
+		found on SD Card.</string>
+	<string name="backup_restored">Backup restored successfully.</string>
 </resources>
