@@ -22,6 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,6 +40,8 @@ public class MoneyTracker extends ListActivity {
 	private static final int BACKUP_SUBMENU_NOW_ID = Menu.FIRST + 5;
 	private static final int BACKUP_SUBMENU_RESTORE_ID = Menu.FIRST + 6;
 
+	private ListView mExpenses;
+
 	private EditText mDisposable;
 
 	private TextView mRemaining;
@@ -54,6 +57,8 @@ public class MoneyTracker extends ListActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+
+		mExpenses = (ListView) findViewById(android.R.id.list);
 
 		mDbHelper = new ExpensesDbHelper(this);
 
@@ -220,9 +225,19 @@ public class MoneyTracker extends ListActivity {
 				return expense.getId();
 			}
 
-			public View getView(int position, View convertView, ViewGroup parent) {
+			public View getView(final int position, View convertView,
+					ViewGroup parent) {
 				Expense exp = expenses.get(position);
 				View view = View.inflate(context, R.layout.expenses_row, null);
+
+				View.OnClickListener listener = new View.OnClickListener() {
+					public void onClick(View v) {
+						doEdit(position);
+					}
+				};
+
+				ImageView edit = (ImageView) view.findViewById(R.id.edit);
+				edit.setOnClickListener(listener);
 
 				TextView value = (TextView) view.findViewById(R.id.value);
 				value.setText(mDecimalFormat.format(exp.getValue()));
@@ -242,17 +257,22 @@ public class MoneyTracker extends ListActivity {
 	}
 
 	private void onEditExpense() {
-		Intent i = new Intent(this, ExpenseEdit.class);
-
 		if (-1 != getSelectedItemPosition()) {
-			Expense expense = mDbHelper.findExpenseById(getSelectedItemId());
-
-			i.putExtra(Expense.KEY_ROWID, expense.getId());
-			i.putExtra(Expense.KEY_VALUE, expense.getValue());
-			i.putExtra(Expense.KEY_DESC, expense.getDescription());
-
-			startActivityForResult(i, ACTIVITY_EDIT_EXPENSE);
+			doEdit(getSelectedItemPosition());
 		}
+	}
+
+	private void doEdit(int position) {
+		Intent i = new Intent(this, ExpenseEdit.class);
+		Expense expense = mDbHelper.findExpenseById(mExpenses
+				.getItemIdAtPosition(position));
+
+		i.putExtra(Expense.KEY_ROWID, expense.getId());
+		i.putExtra(Expense.KEY_VALUE, expense.getValue());
+		i.putExtra(Expense.KEY_DESC, expense.getDescription());
+
+		startActivityForResult(i, ACTIVITY_EDIT_EXPENSE);
+
 	}
 
 	private void onDeleteExpense() {

@@ -5,13 +5,14 @@
 	android:minHeight="100px">
 
 	<EditText android:id="@+id/disposable" android:layout_width="fill_parent"
-		android:layout_height="wrap_content" android:numeric="decimal" />
+		android:layout_height="wrap_content" android:numeric="decimal"
+		android:textSize="22px" />
 
 	<ListView android:id="@+id/android:list"
 		android:layout_height="fill_parent" android:layout_width="fill_parent"
 		android:layout_weight="1" />
 
 	<TextView android:id="@+id/remaining" android:layout_height="wrap_content"
-		android:layout_width="fill_parent" />
+		android:layout_width="fill_parent" android:textSize="22px" />
 
 </LinearLayout>
