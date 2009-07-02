@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="app_name">MoneyTracker</string>
+	<string name="app_name">Money Tracker</string>
 	<string name="menu_add_expense">Add Expense</string>
 	<string name="confirm">Add</string>
 	<string name="description">Description</string>

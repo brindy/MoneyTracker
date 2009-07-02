@@ -3,7 +3,6 @@ package uk.org.brindy.android.moneytracker;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.List;
 
 import android.app.AlertDialog;
@@ -50,7 +49,12 @@ public class MoneyTracker extends ListActivity {
 
 	private MenuItem mDeleteItem;
 
-	private NumberFormat mDecimalFormat = DecimalFormat.getCurrencyInstance();
+	private static final DecimalFormat FORMATTER = (DecimalFormat) DecimalFormat
+			.getCurrencyInstance();
+	static {
+		FORMATTER.setNegativePrefix(FORMATTER.getCurrency().getSymbol());
+		FORMATTER.setNegativeSuffix("");
+	}
 
 	/** Called when the activity is first created. */
 	@Override
@@ -196,13 +200,17 @@ public class MoneyTracker extends ListActivity {
 		fillData();
 	}
 
+	public static String formatRemaining(double remaining) {
+		return FORMATTER.format(remaining);
+	}
+
 	private void calculateRemaining() {
 		double remaining = 0.0;
 		if (mDisposable.getText().toString().trim().length() > 0) {
 			remaining = this.mDbHelper.remaining();
 		}
-		NumberFormat fmt = mDecimalFormat;
-		mRemaining.setText(fmt.format(remaining) + " remaining");
+		String level = remaining < 0.0 ? " over budget" : " remaining";
+		mRemaining.setText(formatRemaining(remaining) + level);
 	}
 
 	private void fillData() {
@@ -240,7 +248,7 @@ public class MoneyTracker extends ListActivity {
 				edit.setOnClickListener(listener);
 
 				TextView value = (TextView) view.findViewById(R.id.value);
-				value.setText(mDecimalFormat.format(exp.getValue()));
+				value.setText(FORMATTER.format(exp.getValue()));
 
 				TextView desc = (TextView) view.findViewById(R.id.description);
 				desc.setText(exp.getDescription());

@@ -1,8 +1,5 @@
 package uk.org.brindy.android.moneytracker;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -43,8 +40,14 @@ public class MoneyTrackerWidgetProvider extends AppWidgetProvider {
 
 		double remaining = new ExpensesDbHelper(context).remaining();
 
-		NumberFormat fmt = DecimalFormat.getCurrencyInstance();
-		views.setTextViewText(R.id.disposable, fmt.format(remaining));
+		String formatted = MoneyTracker.formatRemaining(remaining);
+		views.setTextViewText(R.id.disposable, formatted);
+		
+		views.setTextViewText(R.id.remaining, remaining < 0 ? "over budget"
+				: "remaining");
+
+		views.setTextColor(R.id.disposable, remaining < 0 ? 0xFFFF0000
+				: 0xFF000000);
 
 		appWidgetManager.updateAppWidget(new ComponentName(context,
 				MoneyTrackerWidgetProvider.class), views);

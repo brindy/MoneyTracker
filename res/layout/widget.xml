@@ -10,7 +10,7 @@
 		android:textColor="#000000" android:textStyle="bold"
 		android:paddingLeft="10px" />
 
-	<TextView android:text="remaining" android:layout_width="fill_parent"
+	<TextView android:id="@+id/remaining" android:text="" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" android:textColor="#000000"
 		android:paddingLeft="10px" />
 
