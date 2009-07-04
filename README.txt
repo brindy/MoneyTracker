@@ -7,3 +7,6 @@ application.  The app is now 20k (compressed) vs 480k (compressed) with db4o.
 
 The resource file should be automatically regenerated when you load the project 
 in to Eclipse.
+
+Source is released under Apache License 2.0
+
