@@ -8,5 +8,7 @@ application.  The app is now 20k (compressed) vs 480k (compressed) with db4o.
 The resource file should be automatically regenerated when you load the project 
 in to Eclipse.
 
-Source is released under Apache License 2.0
+Source is released under Apache License 2.0, however permission is NOT given to rebuild and redistribute this widget from the Android market place or elsewhere for free or otherwise.  Source is provided for information only.
+
+If you wish to distributed Money Tracker you must build it yourself and call it something else.  Please realise that this restriction is in place to protect the users of Money Tracker.
 
