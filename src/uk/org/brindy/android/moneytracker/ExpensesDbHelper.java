@@ -80,7 +80,7 @@ public class ExpensesDbHelper {
 				try {
 					reader.close();
 				} catch (IOException e) {
-					Log.e(getClass().getName(), e.getMessage());
+					Log.e("MoneyTracker", e.getMessage(), e);
 				}
 			}
 		}
@@ -103,7 +103,7 @@ public class ExpensesDbHelper {
 					try {
 						in.close();
 					} catch (IOException e) {
-						Log.e(getClass().getName(), e.getMessage());
+						Log.e("MoneyTracker", e.getMessage(), e);
 					}
 				}
 			}
@@ -134,7 +134,7 @@ public class ExpensesDbHelper {
 					out.close();
 				} catch (IOException e) {
 					// ignore
-					Log.e(getClass().getName(), e.getMessage());
+					Log.e("MoneyTracker", e.getMessage(), e);
 				}
 			}
 		}
@@ -212,7 +212,7 @@ public class ExpensesDbHelper {
 				try {
 					out.close();
 				} catch (IOException e) {
-					Log.e(getClass().getName() + "#backup", e.getMessage());
+					Log.e("MoneyTracker", e.getMessage(), e);
 				}
 			}
 		}
@@ -243,7 +243,7 @@ public class ExpensesDbHelper {
 				try {
 					in.close();
 				} catch (Exception e) {
-					Log.e(getClass().getName() + "#restore", e.getMessage());
+					Log.e("MoneyTracker", e.getMessage(), e);
 				}
 			}
 		}
