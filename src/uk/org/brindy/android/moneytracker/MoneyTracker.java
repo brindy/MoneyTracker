@@ -3,6 +3,7 @@ package uk.org.brindy.android.moneytracker;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.Date;
 import java.util.List;
 
 import android.app.AlertDialog;
@@ -21,7 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -87,6 +88,13 @@ public class MoneyTracker extends ListActivity {
 
 			public void onTextChanged(CharSequence s, int start, int before,
 					int count) {
+			}
+		});
+
+		ImageButton addButton = (ImageButton) findViewById(R.id.add);
+		addButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				onAddExpense();
 			}
 		});
 
@@ -181,23 +189,49 @@ public class MoneyTracker extends ListActivity {
 
 		switch (requestCode) {
 		case ACTIVITY_ADD_EXPENSE:
-			exp = new Expense();
-			exp.setValue(extras.getDouble(Expense.KEY_VALUE));
-			exp.setDescription(extras.getString(Expense.KEY_DESC));
-			mDbHelper.createExpense(exp);
+			onAddExpenseResult(extras);
 			break;
 
 		case ACTIVITY_EDIT_EXPENSE:
-			Long rowID = extras.getLong(Expense.KEY_ROWID);
-			if (rowID != null) {
-				exp = mDbHelper.findExpenseById(rowID);
-				exp.setValue(extras.getDouble(Expense.KEY_VALUE));
-				exp.setDescription(extras.getString(Expense.KEY_DESC));
-				mDbHelper.updateExpense(exp);
+			switch (resultCode) {
+			default:
+				onUpdateExpenseResult(extras);
+				break;
+
+			case ExpenseEdit.RESULT_DELETE:
+				onDeleteExpenseResult(extras);
+				break;
 			}
 			break;
 		}
 		fillData();
+	}
+
+	private void onDeleteExpenseResult(Bundle extras) {
+		Long rowID = extras.getLong(Expense.KEY_ROWID);
+		mDbHelper.deleteExpense(rowID);
+		fillData();
+	}
+
+	private void onUpdateExpenseResult(Bundle extras) {
+		Expense exp;
+		Long rowID = extras.getLong(Expense.KEY_ROWID);
+		if (rowID != null) {
+			exp = mDbHelper.findExpenseById(rowID);
+			exp.setValue(extras.getDouble(Expense.KEY_VALUE));
+			exp.setDescription(extras.getString(Expense.KEY_DESC));
+			exp.setDate(new Date(extras.getLong(Expense.KEY_DATE)));
+			mDbHelper.updateExpense(exp);
+		}
+	}
+
+	private void onAddExpenseResult(Bundle extras) {
+		Expense exp;
+		exp = new Expense();
+		exp.setValue(extras.getDouble(Expense.KEY_VALUE));
+		exp.setDescription(extras.getString(Expense.KEY_DESC));
+		exp.setDate(new Date(extras.getLong(Expense.KEY_DATE)));
+		mDbHelper.createExpense(exp);
 	}
 
 	public static String formatRemaining(double remaining) {
@@ -240,11 +274,12 @@ public class MoneyTracker extends ListActivity {
 
 				View.OnClickListener listener = new View.OnClickListener() {
 					public void onClick(View v) {
+						setSelection(position);
 						doEdit(position);
 					}
 				};
 
-				ImageView edit = (ImageView) view.findViewById(R.id.edit);
+				ImageButton edit = (ImageButton) view.findViewById(R.id.edit);
 				edit.setOnClickListener(listener);
 
 				TextView value = (TextView) view.findViewById(R.id.value);
@@ -252,6 +287,9 @@ public class MoneyTracker extends ListActivity {
 
 				TextView desc = (TextView) view.findViewById(R.id.description);
 				desc.setText(exp.getDescription());
+
+				TextView date = (TextView) view.findViewById(R.id.date);
+				date.setText(Formatter.format(exp.getDate()));
 
 				return view;
 			}
@@ -278,6 +316,7 @@ public class MoneyTracker extends ListActivity {
 		i.putExtra(Expense.KEY_ROWID, expense.getId());
 		i.putExtra(Expense.KEY_VALUE, expense.getValue());
 		i.putExtra(Expense.KEY_DESC, expense.getDescription());
+		i.putExtra(Expense.KEY_DATE, expense.getDate().getTime());
 
 		startActivityForResult(i, ACTIVITY_EDIT_EXPENSE);
 

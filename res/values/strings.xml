@@ -4,7 +4,7 @@
 	<string name="menu_add_expense">Add Expense</string>
 	<string name="confirm">Add</string>
 	<string name="description">Description</string>
-	<string name="expensevalue">Value</string>
+	<string name="expensevalue">Value: </string>
 	<string name="menu_delete_expense">Delete Expense</string>
 	<string name="menu_backup">Backup / Restore</string>
 	<string name="menu_clear_expenses">Clear All</string>

@@ -29,6 +29,7 @@ public class ExpensesMgr implements Serializable {
 	}
 
 	List<Expense> getAllExpenses() {
+		Collections.sort(expenses);
 		return Collections.unmodifiableList(expenses);
 	}
 
