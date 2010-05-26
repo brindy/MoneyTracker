@@ -15,30 +15,34 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class MoneyTracker extends ListActivity {
 
 	private static final int ACTIVITY_ADD_EXPENSE = 1;
 	private static final int ACTIVITY_EDIT_EXPENSE = 2;
 
-	private static final int ADD_EXPENSE_MENU_ID = Menu.FIRST;
 	private static final int EDIT_EXPENSE_MENU_ID = Menu.FIRST + 1;
-	private static final int DELETE_EXPENSE_MENU_ID = Menu.FIRST + 2;
 	private static final int CLEAR_EXPENSES_MENU_ID = Menu.FIRST + 3;
 	private static final int BACKUP_MENU_ID = Menu.FIRST + 4;
 	private static final int BACKUP_SUBMENU_NOW_ID = Menu.FIRST + 5;
 	private static final int BACKUP_SUBMENU_RESTORE_ID = Menu.FIRST + 6;
+
+	private static final int CONTEXT_MENU_EDIT = Menu.FIRST + 7;
+	private static final int CONTEXT_MENU_DELETE = Menu.FIRST + 8;
 
 	private ListView mExpenses;
 
@@ -47,8 +51,6 @@ public class MoneyTracker extends ListActivity {
 	private TextView mRemaining;
 
 	private ExpensesDbHelper mDbHelper;
-
-	private MenuItem mDeleteItem;
 
 	private static final DecimalFormat FORMATTER = (DecimalFormat) DecimalFormat
 			.getCurrencyInstance();
@@ -64,6 +66,8 @@ public class MoneyTracker extends ListActivity {
 		setContentView(R.layout.main);
 
 		mExpenses = (ListView) findViewById(android.R.id.list);
+		mExpenses.setLongClickable(true);
+		registerForContextMenu(mExpenses);
 
 		mDbHelper = new ExpensesDbHelper(this);
 
@@ -101,20 +105,31 @@ public class MoneyTracker extends ListActivity {
 		fillData();
 	}
 
-	@Override
-	public boolean onMenuOpened(int featureId, Menu menu) {
-		mDeleteItem.setEnabled(-1 != getSelectedItemPosition());
-		return super.onMenuOpened(featureId, menu);
+	public void onCreateContextMenu(ContextMenu menu, View v,
+			ContextMenuInfo menuInfo) {
+		super.onCreateContextMenu(menu, v, menuInfo);
+		menu.add(0, CONTEXT_MENU_EDIT, 0, "Edit");
+		menu.add(0, CONTEXT_MENU_DELETE, 0, "Delete");
+	}
+
+	public boolean onContextItemSelected(MenuItem item) {
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item
+				.getMenuInfo();
+		switch (item.getItemId()) {
+		case CONTEXT_MENU_EDIT:
+			doEdit(info.position);
+			return true;
+		case CONTEXT_MENU_DELETE:
+			onDeleteExpense(info.position);
+			return true;
+		default:
+			return super.onContextItemSelected(item);
+		}
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
-		menu.add(0, ADD_EXPENSE_MENU_ID, 0, R.string.menu_add_expense);
-
-		mDeleteItem = menu.add(0, DELETE_EXPENSE_MENU_ID, 0,
-				R.string.menu_delete_expense);
-		mDeleteItem.setEnabled(false);
 
 		menu.add(0, CLEAR_EXPENSES_MENU_ID, 0, R.string.menu_clear_expenses);
 
@@ -140,16 +155,8 @@ public class MoneyTracker extends ListActivity {
 		boolean result = super.onMenuItemSelected(featureId, item);
 
 		switch (item.getItemId()) {
-		case ADD_EXPENSE_MENU_ID:
-			onAddExpense();
-			return true;
-
 		case EDIT_EXPENSE_MENU_ID:
 			onEditExpense();
-			return true;
-
-		case DELETE_EXPENSE_MENU_ID:
-			onDeleteExpense();
 			return true;
 
 		case CLEAR_EXPENSES_MENU_ID:
@@ -185,7 +192,6 @@ public class MoneyTracker extends ListActivity {
 		}
 
 		Bundle extras = data.getExtras();
-		Expense exp;
 
 		switch (requestCode) {
 		case ACTIVITY_ADD_EXPENSE:
@@ -221,6 +227,7 @@ public class MoneyTracker extends ListActivity {
 			exp.setValue(extras.getDouble(Expense.KEY_VALUE));
 			exp.setDescription(extras.getString(Expense.KEY_DESC));
 			exp.setDate(new Date(extras.getLong(Expense.KEY_DATE)));
+			exp.setCredit(extras.getBoolean(Expense.KEY_CREDIT));
 			mDbHelper.updateExpense(exp);
 		}
 	}
@@ -231,6 +238,7 @@ public class MoneyTracker extends ListActivity {
 		exp.setValue(extras.getDouble(Expense.KEY_VALUE));
 		exp.setDescription(extras.getString(Expense.KEY_DESC));
 		exp.setDate(new Date(extras.getLong(Expense.KEY_DATE)));
+		exp.setCredit(extras.getBoolean(Expense.KEY_CREDIT));
 		mDbHelper.createExpense(exp);
 	}
 
@@ -269,21 +277,23 @@ public class MoneyTracker extends ListActivity {
 
 			public View getView(final int position, View convertView,
 					ViewGroup parent) {
-				Expense exp = expenses.get(position);
-				View view = View.inflate(context, R.layout.expenses_row, null);
 
-				View.OnClickListener listener = new View.OnClickListener() {
-					public void onClick(View v) {
-						setSelection(position);
-						doEdit(position);
-					}
-				};
-
-				ImageButton edit = (ImageButton) view.findViewById(R.id.edit);
-				edit.setOnClickListener(listener);
+				final Expense exp = expenses.get(position);
+				View view = convertView;
+				if (null == view) {
+					view = View.inflate(context, R.layout.expenses_row, null);
+				}
 
 				TextView value = (TextView) view.findViewById(R.id.value);
-				value.setText(FORMATTER.format(exp.getValue()));
+				String text = FORMATTER.format(exp.getValue());
+
+				if (exp.isCredit()) {
+					text = "c" + text;
+				} else {
+					text = "d" + text;
+				}
+
+				value.setText(text);
 
 				TextView desc = (TextView) view.findViewById(R.id.description);
 				desc.setText(exp.getDescription());
@@ -317,21 +327,45 @@ public class MoneyTracker extends ListActivity {
 		i.putExtra(Expense.KEY_VALUE, expense.getValue());
 		i.putExtra(Expense.KEY_DESC, expense.getDescription());
 		i.putExtra(Expense.KEY_DATE, expense.getDate().getTime());
+		i.putExtra(Expense.KEY_CREDIT, expense.isCredit());
 
 		startActivityForResult(i, ACTIVITY_EDIT_EXPENSE);
 
 	}
 
-	private void onDeleteExpense() {
-		if (-1 != getSelectedItemPosition()) {
-			mDbHelper.deleteExpense(getSelectedItemId());
-			fillData();
-		}
+	private void onDeleteExpense(final int position) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Delete this item?");
+		builder.setItems(new String[] { "Yes", "No" },
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						if (which == 0) {
+							long id = mExpenses.getItemIdAtPosition(position);
+							mDbHelper.deleteExpense(id);
+							fillData();
+						}
+					}
+				});
+
+		builder.show();
+
 	}
 
 	private void onClearExpenses() {
-		mDbHelper.deleteAllExpenses();
-		fillData();
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Clear all expenses?");
+		builder.setItems(new String[] { "Yes", "No" },
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						if (which == 0) {
+							mDbHelper.deleteAllExpenses();
+							fillData();
+						}
+					}
+				});
+
+		builder.show();
 	}
 
 	private void onBackupNow() {

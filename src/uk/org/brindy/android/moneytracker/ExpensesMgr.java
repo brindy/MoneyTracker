@@ -50,7 +50,11 @@ public class ExpensesMgr implements Serializable {
 	double remaining(double disposable) {
 		double remaining = disposable;
 		for (Expense expense : expenses) {
-			remaining -= expense.getValue();
+			if (expense.isCredit()) {
+				remaining += expense.getValue();
+			} else {
+				remaining -= expense.getValue();
+			}
 		}
 		return remaining;
 	}

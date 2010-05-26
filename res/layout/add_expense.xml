@@ -4,7 +4,8 @@
 	android:layout_height="fill_parent">
 
 	<LinearLayout android:orientation="horizontal"
-		android:layout_width="fill_parent" android:layout_height="wrap_content">
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		android:gravity="center_vertical">
 
 		<TextView android:layout_width="wrap_content"
 			android:layout_height="wrap_content" android:text="@string/expensevalue" />
@@ -13,14 +14,18 @@
 			android:layout_height="wrap_content" android:layout_weight="1"
 			android:numeric="decimal" android:imeOptions="actionNext" />
 
+		<ToggleButton android:id="@+id/credit"
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:textOn="Credit" android:textOff="Expense" />
+
 	</LinearLayout>
 
 	<TextView android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:text="Date:" />
 
 	<EditText android:id="@+id/date" android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:editable="false" android:clickable="true" android:imeOptions="actionNext"
+		android:layout_height="wrap_content" android:editable="false"
+		android:clickable="true" android:imeOptions="actionNext"
 		android:inputType="none" />
 
 	<TextView android:layout_width="wrap_content"
@@ -28,8 +33,8 @@
 
 	<EditText android:id="@+id/description" android:layout_width="fill_parent"
 		android:layout_height="wrap_content" android:layout_weight="1"
-		android:inputType="text"
-		android:scrollbars="vertical" android:imeOptions="actionDone" />
+		android:inputType="text" android:scrollbars="vertical"
+		android:imeOptions="actionDone" />
 
 	<LinearLayout android:orientation="horizontal"
 		android:layout_width="fill_parent" android:layout_height="wrap_content">

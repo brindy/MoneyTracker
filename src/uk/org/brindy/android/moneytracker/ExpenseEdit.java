@@ -7,11 +7,9 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
-import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnFocusChangeListener;
@@ -21,6 +19,7 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TimePicker;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 public class ExpenseEdit extends Activity {
 
@@ -28,6 +27,8 @@ public class ExpenseEdit extends Activity {
 	public static final int TIME_DIALOG_ID = 0x1;
 
 	public static final int RESULT_DELETE = 0x55;
+
+	private ToggleButton mExpenseToggle;
 
 	private EditText mValueText;
 
@@ -73,6 +74,7 @@ public class ExpenseEdit extends Activity {
 		mValueText = (EditText) findViewById(R.id.value);
 		mDescText = (EditText) findViewById(R.id.description);
 		mDateText = (EditText) findViewById(R.id.date);
+		mExpenseToggle = (ToggleButton) findViewById(R.id.credit);
 
 		Button confirmButton = (Button) findViewById(R.id.confirm);
 		Button deleteButton = (Button) findViewById(R.id.delete);
@@ -83,14 +85,16 @@ public class ExpenseEdit extends Activity {
 		if (extras != null) {
 			deleteButton.setVisibility(View.VISIBLE);
 
-			double value = extras.getDouble(Expense.KEY_VALUE);
+			double value = Math.abs(extras.getDouble(Expense.KEY_VALUE));
 			String desc = extras.getString(Expense.KEY_DESC);
 			mRowId = extras.getLong(Expense.KEY_ROWID);
 			long time = extras.getLong(Expense.KEY_DATE);
+			boolean credit = extras.getBoolean(Expense.KEY_CREDIT);
 
 			mCalendar.setTimeInMillis(time);
 
 			mValueText.setText(Double.toString(value));
+			mExpenseToggle.setChecked(credit);
 
 			if (desc != null) {
 				mDescText.setText(desc);
@@ -111,6 +115,8 @@ public class ExpenseEdit extends Activity {
 				}
 
 				bundle.putLong(Expense.KEY_DATE, mCalendar.getTimeInMillis());
+				bundle.putBoolean(Expense.KEY_CREDIT, mExpenseToggle
+						.isChecked());
 
 				Intent mIntent = new Intent();
 				mIntent.putExtras(bundle);
@@ -122,16 +128,20 @@ public class ExpenseEdit extends Activity {
 
 		deleteButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				Builder b = new AlertDialog.Builder(ExpenseEdit.this);
-				b.setTitle("Please Confirm");
-				b.setMessage("Delete this expense?");
-				b.setPositiveButton("Yes", new OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						delete();
-					}
-				});
-				b.setNegativeButton("No", null);
-				b.create().show();
+				AlertDialog.Builder builder = new AlertDialog.Builder(
+						ExpenseEdit.this);
+				builder.setTitle("Delete this item?");
+				builder.setItems(new String[] { "Yes", "No" },
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int which) {
+								if (which == 0) {
+									delete();
+								}
+							}
+						});
+
+				builder.show();
 			}
 		});
 

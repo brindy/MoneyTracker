@@ -11,6 +11,7 @@ public class Expense implements Serializable, Comparable<Expense> {
 	public static String KEY_VALUE = "value";
 	public static String KEY_ROWID = "id";
 	public static String KEY_DATE = "date";
+	public static String KEY_CREDIT = "credit";
 
 	private long id;
 
@@ -21,12 +22,22 @@ public class Expense implements Serializable, Comparable<Expense> {
 	// initialise to historic date for legacy installations
 	private Date date = new Date(0);
 
+	private boolean credit;
+
 	public long getId() {
 		return id;
 	}
 
 	public void setId(long id) {
 		this.id = id;
+	}
+
+	public boolean isCredit() {
+		return credit;
+	}
+
+	public void setCredit(boolean credit) {
+		this.credit = credit;
 	}
 
 	public void setValue(double value) {

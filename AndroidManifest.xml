@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="uk.org.brindy.android.moneytracker" android:versionName="1.8"
-	android:versionCode="9">
+	package="uk.org.brindy.android.moneytracker" android:versionName="1.9" android:versionCode="10">
 	<uses-sdk android:minSdkVersion="3" />
 	<application android:icon="@drawable/icon" android:label="@string/app_name">
 		<activity android:name=".MoneyTracker" android:label="@string/app_name">
