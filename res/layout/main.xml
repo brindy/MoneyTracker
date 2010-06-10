@@ -17,8 +17,8 @@
 				android:textSize="10px" />
 
 			<EditText android:id="@+id/disposable" android:layout_width="fill_parent"
-				android:layout_height="wrap_content" android:numeric="decimal"
-				android:layout_weight="1" android:textSize="22px" />
+				android:layout_height="wrap_content" android:layout_weight="1"
+				android:textSize="22px" android:inputType="numberDecimal" />
 
 		</LinearLayout>
 

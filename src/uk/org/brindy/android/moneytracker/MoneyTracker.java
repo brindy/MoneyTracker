@@ -80,7 +80,13 @@ public class MoneyTracker extends ListActivity {
 			public void afterTextChanged(Editable s) {
 				double disposable = 0.0;
 				if (s.toString().trim().length() > 0) {
-					disposable = Double.parseDouble(s.toString());
+					try {
+						disposable = Double.parseDouble(s.toString());
+					} catch (NumberFormatException e) {
+						if (s.toString().startsWith(".")) {
+							s.append("0", 0, 0);
+						}
+					}
 				}
 				mDbHelper.setDisposable(disposable);
 				calculateRemaining();
@@ -288,9 +294,9 @@ public class MoneyTracker extends ListActivity {
 				String text = FORMATTER.format(exp.getValue());
 
 				if (exp.isCredit()) {
-					text = "c" + text;
+					text = "+" + text;
 				} else {
-					text = "d" + text;
+					text = "-" + text;
 				}
 
 				value.setText(text);
