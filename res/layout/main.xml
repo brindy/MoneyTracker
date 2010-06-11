@@ -18,7 +18,9 @@
 
 			<EditText android:id="@+id/disposable" android:layout_width="fill_parent"
 				android:layout_height="wrap_content" android:layout_weight="1"
-				android:textSize="22px" android:inputType="numberDecimal" />
+				android:textSize="22px"
+				android:imeOptions="actionDone" 
+				android:clickable="true" />
 
 		</LinearLayout>
 

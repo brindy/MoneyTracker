@@ -1,7 +1,10 @@
 package uk.org.brindy.android.moneytracker;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Calendar;
 
+import uk.org.brindy.android.moneytracker.CurrencyKeyboard.Listener;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
@@ -12,6 +15,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnFocusChangeListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -21,7 +25,7 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-public class ExpenseEdit extends Activity {
+public class ExpenseEdit extends Activity implements Listener {
 
 	public static final int DATE_DIALOG_ID = 0x0;
 	public static final int TIME_DIALOG_ID = 0x1;
@@ -41,6 +45,8 @@ public class ExpenseEdit extends Activity {
 	private Calendar mCalendar = Calendar.getInstance();
 
 	private InputMethodManager mIMM;
+
+	private NumberFormat FORMATTER = NumberFormat.getCurrencyInstance();
 
 	// the callback received when the user "sets" the date in the dialog
 	private DatePickerDialog.OnDateSetListener mDateSetListener = new DatePickerDialog.OnDateSetListener() {
@@ -72,6 +78,23 @@ public class ExpenseEdit extends Activity {
 		setContentView(R.layout.add_expense);
 
 		mValueText = (EditText) findViewById(R.id.value);
+		mValueText.setInputType(0);
+		mValueText.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				CurrencyKeyboard.show(mValueText, ExpenseEdit.this);
+			}
+		});
+		mValueText.setOnFocusChangeListener(new OnFocusChangeListener() {
+
+			@Override
+			public void onFocusChange(View v, boolean hasFocus) {
+				if (hasFocus) {
+					CurrencyKeyboard.show(mValueText, ExpenseEdit.this);
+				}
+			}
+		});
+
 		mDescText = (EditText) findViewById(R.id.description);
 		mDateText = (EditText) findViewById(R.id.date);
 		mExpenseToggle = (ToggleButton) findViewById(R.id.credit);
@@ -93,12 +116,14 @@ public class ExpenseEdit extends Activity {
 
 			mCalendar.setTimeInMillis(time);
 
-			mValueText.setText(Double.toString(value));
+			mValueText.setText(FORMATTER.format(value));
 			mExpenseToggle.setChecked(credit);
 
 			if (desc != null) {
 				mDescText.setText(desc);
 			}
+		} else {
+			mValueText.setText(FORMATTER.format(0.0));
 		}
 
 		confirmButton.setOnClickListener(new View.OnClickListener() {
@@ -108,8 +133,12 @@ public class ExpenseEdit extends Activity {
 
 				bundle.putString(Expense.KEY_DESC, mDescText.getText()
 						.toString());
-				bundle.putDouble(Expense.KEY_VALUE, Double
-						.parseDouble(mValueText.getText().toString()));
+				try {
+					bundle.putDouble(Expense.KEY_VALUE, FORMATTER.parse(
+							mValueText.getText().toString()).doubleValue());
+				} catch (ParseException e) {
+					throw new RuntimeException(e);
+				}
 				if (mRowId != null) {
 					bundle.putLong(Expense.KEY_ROWID, mRowId);
 				}
@@ -165,6 +194,11 @@ public class ExpenseEdit extends Activity {
 		mIMM = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 
 		updateDisplay();
+	}
+
+	@Override
+	public void setAmount(double d) {
+		mValueText.setText(FORMATTER.format(d));
 	}
 
 	@Override

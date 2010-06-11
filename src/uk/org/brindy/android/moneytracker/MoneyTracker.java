@@ -6,6 +6,7 @@ import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.List;
 
+import uk.org.brindy.android.moneytracker.CurrencyKeyboard.Listener;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.Context;
@@ -13,8 +14,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,6 +21,8 @@ import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.View.OnClickListener;
+import android.view.View.OnFocusChangeListener;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -30,7 +31,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class MoneyTracker extends ListActivity {
+public class MoneyTracker extends ListActivity implements Listener {
 
 	private static final int ACTIVITY_ADD_EXPENSE = 1;
 	private static final int ACTIVITY_EDIT_EXPENSE = 2;
@@ -74,30 +75,22 @@ public class MoneyTracker extends ListActivity {
 		mRemaining = (TextView) findViewById(R.id.remaining);
 
 		mDisposable = (EditText) findViewById(R.id.disposable);
-		mDisposable.setText(Double.toString(mDbHelper.getDisposable()));
-		mDisposable.addTextChangedListener(new TextWatcher() {
+		mDisposable.setText(FORMATTER.format(mDbHelper.getDisposable()));
+		mDisposable.setInputType(0);
 
-			public void afterTextChanged(Editable s) {
-				double disposable = 0.0;
-				if (s.toString().trim().length() > 0) {
-					try {
-						disposable = Double.parseDouble(s.toString());
-					} catch (NumberFormatException e) {
-						if (s.toString().startsWith(".")) {
-							s.append("0", 0, 0);
-						}
-					}
+		mDisposable.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				CurrencyKeyboard.show(mDisposable, MoneyTracker.this);
+			}
+		});
+		mDisposable.setOnFocusChangeListener(new OnFocusChangeListener() {
+
+			@Override
+			public void onFocusChange(View v, boolean hasFocus) {
+				if (hasFocus) {
+					CurrencyKeyboard.show(mDisposable, MoneyTracker.this);
 				}
-				mDbHelper.setDisposable(disposable);
-				calculateRemaining();
-			}
-
-			public void beforeTextChanged(CharSequence s, int start, int count,
-					int after) {
-			}
-
-			public void onTextChanged(CharSequence s, int start, int before,
-					int count) {
 			}
 		});
 
@@ -183,6 +176,12 @@ public class MoneyTracker extends ListActivity {
 
 		fillData();
 		return result;
+	}
+
+	@Override
+	public void setAmount(double d) {
+		mDbHelper.setDisposable(d);
+		calculateRemaining();
 	}
 
 	@Override
