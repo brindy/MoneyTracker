@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnClickListener;
 import android.view.View.OnFocusChangeListener;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -30,8 +31,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 
-public class MoneyTracker extends ListActivity implements Listener {
+public class MoneyTracker extends ListActivity implements Listener,
+		OnItemClickListener {
 
 	private static final int ACTIVITY_ADD_EXPENSE = 1;
 	private static final int ACTIVITY_EDIT_EXPENSE = 2;
@@ -53,6 +56,8 @@ public class MoneyTracker extends ListActivity implements Listener {
 
 	private ExpensesDbHelper mDbHelper;
 
+	private boolean shouldShow;
+
 	private static final DecimalFormat FORMATTER = (DecimalFormat) DecimalFormat
 			.getCurrencyInstance();
 	static {
@@ -66,9 +71,13 @@ public class MoneyTracker extends ListActivity implements Listener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
+		ImageButton add = (ImageButton) findViewById(R.id.add);
+		add.requestFocus();
+
 		mExpenses = (ListView) findViewById(android.R.id.list);
 		mExpenses.setLongClickable(true);
 		registerForContextMenu(mExpenses);
+		mExpenses.setOnItemClickListener(this);
 
 		mDbHelper = new ExpensesDbHelper(this);
 
@@ -88,9 +97,10 @@ public class MoneyTracker extends ListActivity implements Listener {
 
 			@Override
 			public void onFocusChange(View v, boolean hasFocus) {
-				if (hasFocus) {
+				if (hasFocus && shouldShow) {
 					CurrencyKeyboard.show(mDisposable, MoneyTracker.this);
 				}
+				shouldShow = true;
 			}
 		});
 
@@ -102,6 +112,16 @@ public class MoneyTracker extends ListActivity implements Listener {
 		});
 
 		fillData();
+		
+		if (mDbHelper.fetchAllExpenses().size() == 0) {
+			shouldShow = true;
+		}
+	}
+
+	@Override
+	public void onItemClick(AdapterView<?> adapter, View view, int position,
+			long id) {
+		doEdit(position);
 	}
 
 	public void onCreateContextMenu(ContextMenu menu, View v,
@@ -265,6 +285,7 @@ public class MoneyTracker extends ListActivity implements Listener {
 
 		final Context context = this;
 		final List<Expense> expenses = mDbHelper.fetchAllExpenses();
+
 		setListAdapter(new BaseAdapter() {
 
 			public int getCount() {
@@ -288,6 +309,8 @@ public class MoneyTracker extends ListActivity implements Listener {
 				if (null == view) {
 					view = View.inflate(context, R.layout.expenses_row, null);
 				}
+
+				view.setTag(exp);
 
 				TextView value = (TextView) view.findViewById(R.id.value);
 				String text = FORMATTER.format(exp.getValue());
@@ -324,9 +347,15 @@ public class MoneyTracker extends ListActivity implements Listener {
 	}
 
 	private void doEdit(int position) {
-		Intent i = new Intent(this, ExpenseEdit.class);
 		Expense expense = mDbHelper.findExpenseById(mExpenses
 				.getItemIdAtPosition(position));
+
+		doEdit(expense);
+
+	}
+
+	private void doEdit(Expense expense) {
+		Intent i = new Intent(this, ExpenseEdit.class);
 
 		i.putExtra(Expense.KEY_ROWID, expense.getId());
 		i.putExtra(Expense.KEY_VALUE, expense.getValue());
@@ -335,7 +364,6 @@ public class MoneyTracker extends ListActivity implements Listener {
 		i.putExtra(Expense.KEY_CREDIT, expense.isCredit());
 
 		startActivityForResult(i, ACTIVITY_EDIT_EXPENSE);
-
 	}
 
 	private void onDeleteExpense(final int position) {

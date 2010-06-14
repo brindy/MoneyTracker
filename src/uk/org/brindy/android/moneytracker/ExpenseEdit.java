@@ -48,6 +48,8 @@ public class ExpenseEdit extends Activity implements Listener {
 
 	private NumberFormat FORMATTER = NumberFormat.getCurrencyInstance();
 
+	private boolean shouldShow;
+
 	// the callback received when the user "sets" the date in the dialog
 	private DatePickerDialog.OnDateSetListener mDateSetListener = new DatePickerDialog.OnDateSetListener() {
 
@@ -89,9 +91,10 @@ public class ExpenseEdit extends Activity implements Listener {
 
 			@Override
 			public void onFocusChange(View v, boolean hasFocus) {
-				if (hasFocus) {
+				if (hasFocus && shouldShow) {
 					CurrencyKeyboard.show(mValueText, ExpenseEdit.this);
 				}
+				shouldShow = true;
 			}
 		});
 
@@ -123,6 +126,7 @@ public class ExpenseEdit extends Activity implements Listener {
 				mDescText.setText(desc);
 			}
 		} else {
+			shouldShow = true;
 			mValueText.setText(FORMATTER.format(0.0));
 		}
 
